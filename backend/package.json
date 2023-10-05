@@ -10,6 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "apollo-server": "^3.12.1",
+    "convert-csv-to-json": "^2.0.0",
     "nodemon": "^3.0.1"
   }
 }
