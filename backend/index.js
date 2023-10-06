@@ -6,6 +6,21 @@ const typeDefs = gql`
     equipments: [Equipment]
     team(id: Int): Team
   }
+  type Mutation {
+    deleteEquipment(id: String): Equipment
+    insertEquipment(
+      id: String
+      used_by: String
+      count: Int
+      new_or_used: String
+    ): Equipment
+    editEquipment(
+      id: String
+      used_by: String
+      count: Int
+      new_or_used: String
+    ): Equipment
+  }
   type Team {
     id: Int
     manager: String
@@ -44,6 +59,37 @@ const resolvers = {
         return team.id === args.id;
       })[0],
     equipments: () => database.equipments,
+  },
+  Mutation: {
+    deleteEquipment: (parent, args, context, info) => {
+      const deleted = database.equipments.filter((equipment) => {
+        return equipment.id === args.id;
+      })[0];
+      database.equipments = database.equipments.filter((equipment) => {
+        return equipment.id !== args.id;
+      });
+      return deleted;
+    },
+    insertEquipment: (parent, args, context, info) => {
+      const temp = {
+        id: args.id,
+        used_by: args.used_by,
+        count: args.count,
+        new_or_use: args.new_or_used,
+      };
+      database.equipments.push(temp);
+      return temp;
+    },
+    editEquipment: (parent, args, context, info) => {
+      return database.equipments
+        .filter((equipment) => {
+          return equipment.id === args.id;
+        })
+        .map((equipment) => {
+          Object.assign(equipment, args);
+          return equipment;
+        })[0];
+    },
   },
 };
 const server = new ApolloServer({ typeDefs, resolvers });
