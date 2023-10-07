@@ -1,98 +1,38 @@
-const database = require("./database");
-const { ApolloServer, gql } = require("apollo-server");
-const typeDefs = gql`
-  type Query {
-    teams: [Team]
-    equipments: [Equipment]
-    team(id: Int): Team
-  }
-  type Mutation {
-    deleteEquipment(id: String): Equipment
-    insertEquipment(
-      id: String
-      used_by: String
-      count: Int
-      new_or_used: String
-    ): Equipment
-    editEquipment(
-      id: String
-      used_by: String
-      count: Int
-      new_or_used: String
-    ): Equipment
-  }
-  type Team {
-    id: Int
-    manager: String
-    office: String
-    extension_number: String
-    mascot: String
-    cleaning_duty: String
-    project: String
-    supplies: [Supply]
-  }
-  type Equipment {
-    id: String
-    used_by: String
-    count: Int
-    new_or_used: String
-  }
-  type Supply {
-    id: String
-    team: Int
-  }
-`;
-const resolvers = {
-  Query: {
-    teams: () => {
-      const teams = database.teams;
-      const supplies = database.supplies;
-      return teams.map((team) => {
-        return {
-          ...team,
-          supplies: supplies.filter((supply) => supply.team === team.id),
-        };
-      });
-    },
-    team: (parent, args, context, info) =>
-      database.teams.filter((team) => {
-        return team.id === args.id;
-      })[0],
-    equipments: () => database.equipments,
-  },
-  Mutation: {
-    deleteEquipment: (parent, args, context, info) => {
-      const deleted = database.equipments.filter((equipment) => {
-        return equipment.id === args.id;
-      })[0];
-      database.equipments = database.equipments.filter((equipment) => {
-        return equipment.id !== args.id;
-      });
-      return deleted;
-    },
-    insertEquipment: (parent, args, context, info) => {
-      const temp = {
-        id: args.id,
-        used_by: args.used_by,
-        count: args.count,
-        new_or_use: args.new_or_used,
-      };
-      database.equipments.push(temp);
-      return temp;
-    },
-    editEquipment: (parent, args, context, info) => {
-      return database.equipments
-        .filter((equipment) => {
-          return equipment.id === args.id;
-        })
-        .map((equipment) => {
-          Object.assign(equipment, args);
-          return equipment;
-        })[0];
-    },
-  },
-};
+const { ApolloServer } = require("apollo-server");
+
+const queries = require("./typedefs-resolvers/_queries");
+const mutations = require("./typedefs-resolvers/_mutations");
+const enums = require("./typedefs-resolvers/_enums");
+const equipments = require("./typedefs-resolvers/equipments");
+const softwares = require("./typedefs-resolvers/softwares");
+const supplies = require("./typedefs-resolvers/supplies");
+const people = require("./typedefs-resolvers/people");
+const givens = require("./typedefs-resolvers/givens");
+const tools = require("./typedefs-resolvers/tools");
+
+const typeDefs = [
+  queries,
+  mutations,
+  enums,
+  equipments.typeDefs,
+  softwares.typeDefs,
+  supplies.typeDefs,
+  people.typeDefs,
+  givens.typeDefs,
+  tools.typeDefs,
+];
+
+const resolvers = [
+  equipments.resolvers,
+  softwares.resolvers,
+  supplies.resolvers,
+  people.resolvers,
+  givens.resolvers,
+  tools.resolvers,
+];
+
 const server = new ApolloServer({ typeDefs, resolvers });
+
 server.listen().then(({ url }) => {
   console.log(`🚀  Server ready at ${url}`);
 });
